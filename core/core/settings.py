@@ -40,6 +40,8 @@ INSTALLED_APPS = [
 
     'books',
     'users',
+    'rest_framework',
+    'interactions',
 ]
 
 MIDDLEWARE = [
@@ -72,6 +74,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 AUTH_USER_MODEL = 'users.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 
 
 # Database
