@@ -3,4 +3,5 @@ from .views import InteractionView
 
 urlpatterns = [
     path('', InteractionView.as_view()),
+    
 ]
