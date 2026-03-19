@@ -2,6 +2,7 @@ from collections import Counter
 from interactions.models import Interaction
 from books.models import Book
 
+
 def get_user_genre_preferences(user):
     interactions = Interaction.objects.filter(user=user).select_related('book')
 
@@ -13,12 +14,17 @@ def get_user_genre_preferences(user):
 
     return Counter(genres)
 
+
 def get_recommended_books(user):
     preferences = get_user_genre_preferences(user)
 
     if not preferences:
         return Book.objects.none()
-    
+
     top_genres = [genre for genre, _ in preferences.most_common(2)]
 
-    return Book.objects.filter(genre__in=top_genres)
+    seen_books = Interaction.objects.filter(user=user).values_list('book', flat=True)
+
+    return Book.objects.filter(
+        genre__in=top_genres
+    ).exclude(id__in=seen_books)
