@@ -1,6 +1,7 @@
 from collections import defaultdict
 from interactions.models import Interaction
 from books.models import Book
+from django.db.models import Count
 
 
 def get_user_genre_preferences(user):
@@ -39,6 +40,12 @@ def get_recommended_books(user):
 
     seen_books = Interaction.objects.filter(user=user).values_list('book', flat=True)
 
-    return Book.objects.filter(
+    books = Book.objects.filter(
         genre__in=top_genres
-    ).exclude(id__in=seen_books)
+    ).exclude(
+        id__in=seen_books
+    ).annotate(
+        interaction_count=Count('interaction')
+    ).order_by('-interaction_count')
+
+    return books
