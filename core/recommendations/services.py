@@ -58,3 +58,28 @@ def get_recommended_books(user):
     )
 
     return ranked_books
+
+def build_user_item_matrix():
+    interactions = Interaction.objects.all().select_related('user', 'book')
+
+    matrix = defaultdict(lambda: defaultdict(int))
+
+    for interaction in interactions:
+        user_id = interaction.user.id
+        book_id = interaction.book.id
+
+        if interaction.action == 'click':
+            matrix[user_id][book_id] = min(matrix[user_id][book_id] + 1, 3)
+        
+        elif interaction.action == 'like':
+            matrix[user_id][book_id] += 3
+
+        elif interaction.action == 'rate':
+            if interaction.value is not None:
+                matrix[user_id][book_id] += interaction.value
+
+    print("\n=== USER-ITEM MATRIX ===")
+    for user, books in matrix.items():
+        print(f"User {user}: {dict(books)}")
+
+    return matrix

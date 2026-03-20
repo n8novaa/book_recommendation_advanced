@@ -9,6 +9,8 @@ from .services import get_user_genre_preferences
 from .services import get_recommended_books
 from books.serializers import BookSerializer
 
+from .services import build_user_item_matrix
+
 
 class TestPreferenceView(APIView):
     permission_classes = [IsAuthenticated]
@@ -21,6 +23,7 @@ class RecommendationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        build_user_item_matrix()
         books = get_recommended_books(request.user)
 
         if not books:
