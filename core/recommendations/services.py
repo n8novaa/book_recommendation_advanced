@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import defaultdict
 from interactions.models import Interaction
 from books.models import Book
 
@@ -6,22 +6,36 @@ from books.models import Book
 def get_user_genre_preferences(user):
     interactions = Interaction.objects.filter(user=user).select_related('book')
 
-    genres = []
+    scores = defaultdict(int)
 
     for interaction in interactions:
-        if interaction.book and interaction.book.genre:
-            genres.append(interaction.book.genre)
+        genre = interaction.book.genre
 
-    return Counter(genres)
+        if not genre:
+            continue
 
+        if interaction.action == 'click':
+            scores[genre] += 1
+        
+        elif interaction.action == 'like':
+            scores[genre] += 3
+        
+        elif interaction.action == 'rate' and interaction.value:
+            scores[genre] += interaction.value
+    
+    return scores
+
+    
 
 def get_recommended_books(user):
     preferences = get_user_genre_preferences(user)
 
     if not preferences:
         return Book.objects.none()
+    
+    sorted_genres = sorted(preferences, key=preferences.get, reverse=True)
 
-    top_genres = [genre for genre, _ in preferences.most_common(2)]
+    top_genres = sorted_genres[:2]
 
     seen_books = Interaction.objects.filter(user=user).values_list('book', flat=True)
 
