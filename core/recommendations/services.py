@@ -46,6 +46,15 @@ def get_recommended_books(user):
         id__in=seen_books
     ).annotate(
         interaction_count=Count('interaction')
-    ).order_by('-interaction_count')
+    )
 
-    return books
+    ranked_books = sorted(
+        books,
+        key=lambda book: (
+          preferences.get(book.genre, 0) * 2 + book.interaction_count  
+        ),
+        reverse=True
+
+    )
+
+    return ranked_books
