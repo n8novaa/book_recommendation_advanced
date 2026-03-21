@@ -2,6 +2,7 @@ from collections import defaultdict
 from interactions.models import Interaction
 from books.models import Book
 from django.db.models import Count
+import math
 
 
 def get_user_genre_preferences(user):
@@ -83,3 +84,36 @@ def build_user_item_matrix():
         print(f"User {user}: {dict(books)}")
 
     return matrix
+
+def cosine_similarity(user1, user2):
+    common_books = set(user1.keys()) & set(user2.keys())
+
+    if not common_books:
+        return 0
+    
+    dot_product = sum(user1[b] * user2[b] for b in common_books)
+
+    norm1 = math.sqrt(sum(v**2 for v in user1.values()))
+    norm2 = math.sqrt(sum(v**2 for v in user2.values()))
+
+    if norm1 == 0 or norm2 == 0:
+        return 0
+    
+    return dot_product / (norm1 * norm2)
+
+
+def test_similarity():
+    matrix = build_user_item_matrix()
+
+    users = list(matrix.keys())
+
+    if len(users) < 2:
+        print("Not enough users to compare")
+        return
+
+    u1 = users[0]
+    u2 = users[1]
+
+    sim = cosine_similarity(matrix[u1], matrix[u2])
+
+    print(f"\nSimilarity between User {u1} and User {u2}: {sim}")

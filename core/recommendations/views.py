@@ -9,7 +9,7 @@ from .services import get_user_genre_preferences
 from .services import get_recommended_books
 from books.serializers import BookSerializer
 
-from .services import build_user_item_matrix
+from .services import build_user_item_matrix, test_similarity
 
 
 class TestPreferenceView(APIView):
@@ -24,6 +24,7 @@ class RecommendationView(APIView):
 
     def get(self, request):
         build_user_item_matrix()
+        test_similarity()
         books = get_recommended_books(request.user)
 
         if not books:
