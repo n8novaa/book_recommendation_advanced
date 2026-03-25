@@ -6,10 +6,12 @@ from rest_framework.permissions import IsAuthenticated
 
 from .services import get_user_genre_preferences
 
-from .services import get_recommended_books
+from .services import get_recommended_books, collaborative_recommendations
 from books.serializers import BookSerializer
 
 from .services import build_user_item_matrix, test_similarity
+
+from books.models import Book
 
 
 class TestPreferenceView(APIView):
@@ -25,11 +27,9 @@ class RecommendationView(APIView):
     def get(self, request):
         build_user_item_matrix()
         test_similarity()
-        books = get_recommended_books(request.user)
+        book_ids = collaborative_recommendations(request.user)
 
-        if not books:
-            return  Response({"message": "No recommendations available"})
-        
-        serializer = BookSerializer(books, many=True)
-        return Response(serializer.data)
+        books = Book.objects.filter(id__in=book_ids)
+
+        return Response([book.title for book in books])
 

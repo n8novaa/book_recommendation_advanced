@@ -144,3 +144,37 @@ def get_similar_users(target_user_id, matrix):
         print(f"User {user_id} → similarity: {sim:.3f}")
 
     return similarities
+
+def collaborative_recommendations(user):
+    matrix = build_user_item_matrix()
+
+    if user.id not in matrix:
+        return[]
+    
+    similar_users = get_similar_users(user.id, matrix)
+
+    user_books = set(matrix[user.id].keys())
+
+    recommendations = defaultdict(float)
+
+    for other_user_id, similarity in similar_users:
+        for book_id, score in matrix[other_user_id].items():
+
+            if book_id in user_books:
+                continue
+
+            if similarity < 0.3:
+                continue
+
+            recommendations[book_id] += score * similarity
+
+    sorted_books = sorted(
+        recommendations.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )
+
+    print("\n=== COLLAB RECOMMENDATIONS ===")
+    print(sorted_books)
+
+    return [book_id for book_id, _ in sorted_books]
