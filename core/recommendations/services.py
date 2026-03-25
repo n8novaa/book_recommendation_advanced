@@ -111,9 +111,36 @@ def test_similarity():
         print("Not enough users to compare")
         return
 
-    u1 = users[0]
-    u2 = users[1]
+    target_user = users[0]
 
-    sim = cosine_similarity(matrix[u1], matrix[u2])
+    similar_users = get_similar_users(target_user, matrix)
 
-    print(f"\nSimilarity between User {u1} and User {u2}: {sim}")
+    print(f"\nTop similar users for User {target_user}:")
+    print(similar_users)
+
+
+def get_similar_users(target_user_id, matrix):
+    similarities = []
+
+    target_vector = matrix[target_user_id]
+
+    for user_id, vector in matrix.items():
+        if user_id == target_user_id:
+            continue
+
+        if all(v <= 1 for v in vector.values()):
+            continue
+        
+
+        sim = cosine_similarity(target_vector, vector)
+
+        if sim > 0:
+            similarities.append((user_id, sim))
+
+    similarities.sort(key=lambda x: x[1], reverse=True)
+
+    print("\n=== SIMILAR USERS ===")
+    for user_id, sim in similarities:
+        print(f"User {user_id} → similarity: {sim:.3f}")
+
+    return similarities
