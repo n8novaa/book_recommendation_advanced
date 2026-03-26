@@ -178,3 +178,31 @@ def collaborative_recommendations(user):
     print(sorted_books)
 
     return [book_id for book_id, _ in sorted_books]
+
+def hybrid_recommendations(user):
+    content_books = list(get_recommended_books(user))
+
+    collab_ids = collaborative_recommendations(user)
+
+    # 🔥 Convert IDs → Book objects (ORDER PRESERVED)
+    books_dict = {
+        book.id: book for book in Book.objects.filter(id__in=collab_ids)
+    }
+
+    collab_books = [
+        books_dict[b_id] for b_id in collab_ids if b_id in books_dict
+    ]
+
+    combined = content_books.copy()
+
+    existing_ids = set(b.id for b in combined)
+
+    for book in collab_books:
+        if book.id not in existing_ids:
+            combined.append(book)
+    
+    print("\n=== HYBRID RECOMMENDATIONS ===")
+    for book in combined:
+        print(book.title)
+
+    return combined

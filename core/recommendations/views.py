@@ -11,6 +11,8 @@ from books.serializers import BookSerializer
 
 from .services import build_user_item_matrix, test_similarity
 
+from .services import hybrid_recommendations
+
 from books.models import Book
 
 
@@ -29,7 +31,10 @@ class RecommendationView(APIView):
         test_similarity()
         book_ids = collaborative_recommendations(request.user)
 
-        books = Book.objects.filter(id__in=book_ids)
+        books = hybrid_recommendations(request.user)
 
-        return Response([book.title for book in books])
+        books_dict = {book.id: book for book in Book.objects.filter(id__in=book_ids)}
+        ordered_books = [books_dict[b_id] for b_id in book_ids if b_id in books_dict]
+
+        return Response([book.title for book in ordered_books])
 
