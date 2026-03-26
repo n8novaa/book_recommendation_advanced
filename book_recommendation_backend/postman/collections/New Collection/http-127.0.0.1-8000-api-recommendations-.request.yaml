@@ -1,0 +1,8 @@
+$kind: http-request
+name: http://127.0.0.1:8000/api/recommendations/
+url: http://127.0.0.1:8000/api/recommendations/
+method: GET
+headers:
+  Authorization: Bearer
+    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczOTQzMzExLCJpYXQiOjE3NzM5NDMwMTEsImp0aSI6IjMzZWQyOTZlZTA4MTQxMTg5NGE4M2I2ZTBlMTZhNzU0IiwidXNlcl9pZCI6IjQifQ.cW2bEQj3riUb1-Kq_RHaKRwktRHuCLq_xRJY_cJSnnk
+order: 2308649287411985
