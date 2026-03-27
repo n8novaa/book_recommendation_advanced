@@ -60,7 +60,20 @@ export const getBooks = async () => {
   const res = await fetch(`${API_URL}/books/`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  if (!res.ok) throw new Error("Failed to fetch books");
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      throw new Error(`Unauthorized (401). Your session may have expired. Error: ${errorData.code || errorData.detail || 'Missing token'}`);
+    }
+    if (res.status === 404) {
+      throw new Error(`Endpoint not found (404). URL: /api/books/. Are you sure it's routed correctly in Django?`);
+    }
+    if (res.status === 405) {
+      throw new Error(`Method Not Allowed (405). Your Django 'BookCreateView' is missing a 'def get(self, request):' method! It only supports POST right now.`);
+    }
+    throw new Error(errorData.detail || errorData.error || `Failed to fetch books from backend. Status: ${res.status}`);
+  }
   return res.json();
 };
 
@@ -74,6 +87,12 @@ export const addInteraction = async (book_id: number, interaction_type: string, 
     },
     body: JSON.stringify({ book_id, interaction_type, rating }),
   });
-  if (!res.ok) throw new Error("Failed to record interaction");
+  
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error(`Endpoint not found (404). URL: /api/interactions/`);
+    }
+    throw new Error("Failed to record interaction");
+  }
   return res.json();
 };
