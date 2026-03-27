@@ -77,22 +77,54 @@ export const getBooks = async () => {
   return res.json();
 };
 
-export const addInteraction = async (book_id: number, interaction_type: string, rating: number | null = null) => {
+export const addInteraction = async (
+  book_id: number,
+  interaction_type: string,
+  rating: number | null = null
+) => {
   const token = getToken();
+
+  const body: any = {
+    book: book_id,            // ✅ FIXED
+    action: interaction_type, // ✅ FIXED
+  };
+
+  if (interaction_type === "rate" && rating !== null) {
+    body.value = rating;      // ✅ FIXED
+  }
+
   const res = await fetch(`${API_URL}/interactions/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ book_id, interaction_type, rating }),
+    body: JSON.stringify(body),
   });
-  
+
   if (!res.ok) {
-    if (res.status === 404) {
-      throw new Error(`Endpoint not found (404). URL: /api/interactions/`);
-    }
-    throw new Error("Failed to record interaction");
+    const errorData = await res.json().catch(() => ({}));
+    console.error("BACKEND ERROR:", errorData); // 🔥 ADD THIS
+    throw new Error(JSON.stringify(errorData));
   }
+
+  return res.json();
+};
+
+export const getInteractions = async () => {
+  const token = getToken();
+  const res = await fetch(`${API_URL}/interactions/`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error("Failed to fetch your interactions.");
+  return res.json();
+};
+
+export const getRecommendations = async () => {
+  const token = getToken();
+  const res = await fetch(`${API_URL}/recommendations/`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error("Failed to fetch recommendations.");
   return res.json();
 };
