@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { login, setToken } from "@/lib/api";
+import { register as registerApi, setToken } from "@/lib/api";
 import Link from "next/link";
 
-export default function LoginPage() {
-  const [formData, setFormData] = useState({ username: "", password: "" });
+export default function RegisterPage() {
+  const [formData, setFormData] = useState({ username: "", password: "", email: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -23,32 +23,33 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await login(formData);
-      // Django REST Simple JWT returns 'access' and 'refresh'
+      const response = await registerApi(formData);
       const token = response.access || response.token || response.access_token;
       
+      // Fallback depending on your DRF response containing token on Registration
       if (token) {
         setToken(token);
         router.push("/dashboard");
       } else {
-        throw new Error("Invalid response from server. No access token provided.");
+        // If the backend doesn't auto-login on register, redirect to login
+        router.push("/login?message=Account+created.+Please+sign+in.");
       }
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred");
+      setError(err.message || "An unexpected error occurred during registration");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center py-12 px-4 sm:px-6 lg:px-8 opacity-0 animate-[slide-up_0.6s_ease-out_forwards]">
-      <div className="w-full max-w-md space-y-8 bg-white/50 backdrop-blur-2xl p-10 rounded-3xl shadow-2xl shadow-indigo-100/50 border border-white ring-1 ring-slate-900/5">
+    <div className="flex min-h-[80vh] items-center justify-center py-12 px-4 sm:px-6 lg:px-8 opacity-0 animate-[fade-in_0.5s_ease-out_forwards]">
+      <div className="w-full max-w-md space-y-6 bg-white/50 backdrop-blur-2xl p-10 rounded-3xl shadow-2xl shadow-indigo-100/50 border border-white ring-1 ring-slate-900/5">
         <div>
-          <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-slate-900">
-            Welcome Back
+          <h2 className="text-center text-3xl font-extrabold tracking-tight text-slate-900">
+            Create an Account
           </h2>
           <p className="mt-2 text-center text-sm text-slate-600">
-            Log in to access your recommendations
+            Join BookReads today
           </p>
         </div>
 
@@ -58,7 +59,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="username">
@@ -70,8 +71,22 @@ export default function LoginPage() {
                 type="text"
                 autoComplete="username"
                 required
-                placeholder="Enter your username"
+                placeholder="Choose a username"
                 value={formData.username}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="email">
+                Email Address <span className="text-slate-400 font-normal">(Optional)</span>
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={formData.email}
                 onChange={handleChange}
               />
             </div>
@@ -83,9 +98,9 @@ export default function LoginPage() {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
-                placeholder="••••••••"
+                placeholder="Create a password"
                 value={formData.password}
                 onChange={handleChange}
               />
@@ -95,17 +110,17 @@ export default function LoginPage() {
           <Button 
             type="submit" 
             variant="primary" 
-            className="w-full text-lg shadow-indigo-500/30 font-bold"
+            className="w-full text-lg shadow-indigo-500/30 font-bold mt-4"
             disabled={loading}
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? "Creating..." : "Sign up"}
           </Button>
         </form>
 
         <p className="text-center text-sm text-slate-600">
-          Don't have an account?{" "}
-          <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-            Sign up
+          Already have an account?{" "}
+          <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+            Sign in
           </Link>
         </p>
       </div>
