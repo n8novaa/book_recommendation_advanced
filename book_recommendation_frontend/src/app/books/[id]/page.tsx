@@ -7,6 +7,7 @@ import { getBook, addInteraction } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 import { useToast } from "@/components/ui/Toast";
 import AuthPrompt from "@/components/ui/AuthPrompt";
+import StarRating from "@/components/ui/StarRating";
 
 type Book = {
   id: number;
@@ -29,6 +30,7 @@ export default function BookDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [liked, setLiked] = useState(false);
+  const [userRating, setUserRating] = useState<number | null>(null);
   const [interacting, setInteracting] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
@@ -65,6 +67,20 @@ export default function BookDetailPage() {
       }
     } catch {
       showToast("Couldn't record interaction. Please try again.", "error");
+    } finally {
+      setInteracting(false);
+    }
+  };
+
+  const handleRate = async (value: number) => {
+    if (!requireAuth()) return;
+    try {
+      setInteracting(true);
+      await addInteraction(id, "rate", value);
+      setUserRating(value);
+      showToast(`Rated "${book?.title}" ${value} star${value > 1 ? "s" : ""}!`, "success");
+    } catch {
+      showToast("Couldn't submit rating. Please try again.", "error");
     } finally {
       setInteracting(false);
     }
@@ -203,6 +219,34 @@ export default function BookDetailPage() {
 
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-3">
+
+              {/* ── Rating row ── */}
+              <div className="w-full">
+                <p className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-2">
+                  Rate this book
+                </p>
+                {isAuthenticated ? (
+                  <StarRating
+                    onRate={handleRate}
+                    disabled={interacting}
+                    currentRating={userRating}
+                  />
+                ) : (
+                  <button
+                    onClick={() => setShowAuthPrompt(true)}
+                    className="flex items-center gap-1 text-slate-300 hover:text-amber-400 transition-colors"
+                    title="Login to rate this book"
+                  >
+                    {[1,2,3,4,5].map((s) => (
+                      <span key={s} className="text-2xl">★</span>
+                    ))}
+                    <span className="ml-2 text-xs text-slate-400 font-medium">Login to rate</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div className="w-full border-t border-slate-100" />
 
               {/* Like button */}
               <button

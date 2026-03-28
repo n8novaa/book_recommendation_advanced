@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "./ui/Button";
 import { useToast } from "./ui/Toast";
 import AuthPrompt from "./ui/AuthPrompt";
+import StarRating from "./ui/StarRating";
 import { addInteraction } from "@/lib/api";
 
 type BookCardProps = {
@@ -25,9 +26,23 @@ export default function BookCard({
   isAuthenticated = false,
 }: BookCardProps) {
   const [liked, setLiked] = useState(false);
+  const [userRating, setUserRating] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [showRatingPicker, setShowRatingPicker] = useState(false);
+  const ratingRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
+
+  // Close rating picker when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ratingRef.current && !ratingRef.current.contains(e.target as Node)) {
+        setShowRatingPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   /** Guard: if not logged in, show the auth prompt instead of calling backend */
   const requireAuth = (): boolean => {
@@ -38,38 +53,53 @@ export default function BookCard({
     return true;
   };
 
-  const handleInteraction = async (type: string, val: number | null = null) => {
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!requireAuth()) return;
     try {
       setLoading(true);
-      await addInteraction(id, type, val);
-      if (type === "like") {
-        setLiked(true);
-        showToast(`Added "${title}" to your favourites!`, "success");
-      } else if (type === "rate") {
-        showToast(`Rated "${title}" 5 stars!`, "success");
-      }
-    } catch (error) {
+      await addInteraction(id, "like");
+      setLiked(true);
+      showToast(`Added "${title}" to your favourites!`, "success");
+    } catch {
       showToast("Couldn't record interaction. Please try again.", "error");
-      console.error(`Failed to record ${type} interaction`, error);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleRate = async (value: number) => {
+    if (!requireAuth()) return;
+    try {
+      setLoading(true);
+      await addInteraction(id, "rate", value);
+      setUserRating(value);
+      setShowRatingPicker(false);
+      showToast(`Rated "${title}" ${value} star${value > 1 ? "s" : ""}!`, "success");
+    } catch {
+      showToast("Couldn't submit rating. Please try again.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBadgeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!requireAuth()) return;
+    if (userRating !== null) return; // already rated
+    setShowRatingPicker((prev) => !prev);
+  };
+
   return (
     <div className="relative flex flex-col h-full overflow-hidden bg-white/40 backdrop-blur-2xl border border-white/60 rounded-3xl shadow-xl shadow-slate-200/20 ring-1 ring-slate-900/5 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-200/40 transition-all duration-300 group cursor-pointer">
 
-      {/* Auth prompt overlay — shown when unauth user clicks an action */}
+      {/* Auth prompt overlay */}
       {showAuthPrompt && (
         <AuthPrompt onClose={() => setShowAuthPrompt(false)} />
       )}
 
       {/* Cover */}
-      <div
-        className="relative aspect-[4/5] w-full overflow-hidden bg-white/50 backdrop-blur-sm border-b border-white/40"
-        onClick={() => handleInteraction("click")}
-      >
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-white/50 backdrop-blur-sm border-b border-white/40">
         {coverImage ? (
           <img
             src={coverImage}
@@ -85,13 +115,41 @@ export default function BookCard({
           </div>
         )}
 
-        {/* Rating badge */}
-        <div
-          className="absolute top-3 right-3 bg-white/70 backdrop-blur-md rounded-full px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm border border-white/60 flex items-center gap-1 cursor-pointer hover:bg-white transition-colors"
-          onClick={(e) => { e.stopPropagation(); handleInteraction("rate", 5); }}
-          title={isAuthenticated ? "Click to rate 5 stars" : "Login to rate"}
-        >
-          <span className="text-amber-500">★</span> {rating}
+        {/* ── Rating badge + picker popover ── */}
+        <div ref={ratingRef} className="absolute top-3 right-3">
+          {/* Badge button */}
+          <button
+            onClick={handleBadgeClick}
+            title={
+              !isAuthenticated
+                ? "Login to rate"
+                : userRating !== null
+                ? `You rated ${userRating}/5`
+                : "Rate this book"
+            }
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold shadow-sm border transition-all duration-200 backdrop-blur-md ${
+              userRating !== null
+                ? "bg-amber-400/90 text-white border-amber-300"
+                : "bg-white/70 text-slate-800 border-white/60 hover:bg-white"
+            }`}
+          >
+            <span className={userRating !== null ? "text-white" : "text-amber-500"}>★</span>
+            {userRating !== null ? `${userRating}/5` : rating}
+          </button>
+
+          {/* Star picker popover */}
+          {showRatingPicker && (
+            <div className="absolute top-full right-0 mt-2 z-30 bg-white/90 backdrop-blur-xl border border-white/80 rounded-2xl shadow-xl shadow-slate-200/50 px-4 py-3 min-w-max animate-[fade-in_0.15s_ease-out_forwards]">
+              <p className="text-[11px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">
+                Your rating
+              </p>
+              <StarRating
+                onRate={handleRate}
+                disabled={loading}
+                currentRating={userRating}
+              />
+            </div>
+          )}
         </div>
 
         {/* Preview badge for unauthenticated users */}
@@ -130,7 +188,7 @@ export default function BookCard({
                 : "text-slate-400 hover:text-rose-500"
             }`}
             disabled={loading || (isAuthenticated && liked)}
-            onClick={(e) => { e.stopPropagation(); handleInteraction("like"); }}
+            onClick={handleLike}
             title={
               !isAuthenticated
                 ? "Login to like this book"
