@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import BookCard from "@/components/BookCard";
 import BookCardSkeleton from "@/components/ui/BookCardSkeleton";
 import { getBooks } from "@/lib/api";
+import { useAuth } from "@/lib/useAuth";
 
 type Book = {
   id: number;
@@ -19,6 +21,7 @@ type Book = {
 const GENRES = ["All", "Fiction", "Non-Fiction", "Science", "History", "Fantasy", "Mystery", "Romance"];
 
 export default function ExplorePage() {
+  const { isAuthenticated } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +58,22 @@ export default function ExplorePage() {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 opacity-0 animate-[fade-in_0.6s_ease-out_forwards]">
       {/* Header + Search */}
       <div className="bg-white/50 backdrop-blur-2xl rounded-3xl shadow-xl shadow-indigo-100/40 border border-white p-10 ring-1 ring-slate-900/5 mb-8">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 mb-2">Explore Books</h1>
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Explore Books</h1>
+          {!isAuthenticated && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 font-medium">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Preview mode —{" "}
+              <Link href="/login" className="underline underline-offset-2 hover:text-amber-900">
+                log in
+              </Link>
+              {" "}to interact
+            </div>
+          )}
+        </div>
         <p className="text-lg text-slate-600 mb-8">Browse the full catalog — search, filter, and interact.</p>
         
         <div className="flex flex-col sm:flex-row gap-4 max-w-2xl">
@@ -125,6 +143,7 @@ export default function ExplorePage() {
               author={book.author}
               rating={book.rating || 4.5}
               coverImage={book.coverImage}
+              isAuthenticated={isAuthenticated}
             />
           ))}
         </div>

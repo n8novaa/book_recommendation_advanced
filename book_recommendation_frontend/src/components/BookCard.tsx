@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "./ui/Button";
 import { useToast } from "./ui/Toast";
+import AuthPrompt from "./ui/AuthPrompt";
 import { addInteraction } from "@/lib/api";
 
 type BookCardProps = {
@@ -11,14 +12,33 @@ type BookCardProps = {
   author: string;
   coverImage?: string;
   rating?: number;
+  isAuthenticated?: boolean;
 };
 
-export default function BookCard({ id, title, author, coverImage, rating = 4.5 }: BookCardProps) {
+export default function BookCard({
+  id,
+  title,
+  author,
+  coverImage,
+  rating = 4.5,
+  isAuthenticated = false,
+}: BookCardProps) {
   const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const { showToast } = useToast();
 
+  /** Guard: if not logged in, show the auth prompt instead of calling backend */
+  const requireAuth = (): boolean => {
+    if (!isAuthenticated) {
+      setShowAuthPrompt(true);
+      return false;
+    }
+    return true;
+  };
+
   const handleInteraction = async (type: string, val: number | null = null) => {
+    if (!requireAuth()) return;
     try {
       setLoading(true);
       await addInteraction(id, type, val);
@@ -29,7 +49,7 @@ export default function BookCard({ id, title, author, coverImage, rating = 4.5 }
         showToast(`Rated "${title}" 5 stars!`, "success");
       }
     } catch (error) {
-      showToast("Couldn't record interaction. Are you logged in?", "error");
+      showToast("Couldn't record interaction. Please try again.", "error");
       console.error(`Failed to record ${type} interaction`, error);
     } finally {
       setLoading(false);
@@ -37,12 +57,18 @@ export default function BookCard({ id, title, author, coverImage, rating = 4.5 }
   };
 
   return (
-    <div
-      className="flex flex-col h-full overflow-hidden bg-white/40 backdrop-blur-2xl border border-white/60 rounded-3xl shadow-xl shadow-slate-200/20 ring-1 ring-slate-900/5 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-200/40 transition-all duration-300 group cursor-pointer"
-      onClick={() => handleInteraction("click")}
-    >
+    <div className="relative flex flex-col h-full overflow-hidden bg-white/40 backdrop-blur-2xl border border-white/60 rounded-3xl shadow-xl shadow-slate-200/20 ring-1 ring-slate-900/5 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-200/40 transition-all duration-300 group cursor-pointer">
+
+      {/* Auth prompt overlay — shown when unauth user clicks an action */}
+      {showAuthPrompt && (
+        <AuthPrompt onClose={() => setShowAuthPrompt(false)} />
+      )}
+
       {/* Cover */}
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-white/50 backdrop-blur-sm border-b border-white/40">
+      <div
+        className="relative aspect-[4/5] w-full overflow-hidden bg-white/50 backdrop-blur-sm border-b border-white/40"
+        onClick={() => handleInteraction("click")}
+      >
         {coverImage ? (
           <img
             src={coverImage}
@@ -62,15 +88,25 @@ export default function BookCard({ id, title, author, coverImage, rating = 4.5 }
         <div
           className="absolute top-3 right-3 bg-white/70 backdrop-blur-md rounded-full px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm border border-white/60 flex items-center gap-1 cursor-pointer hover:bg-white transition-colors"
           onClick={(e) => { e.stopPropagation(); handleInteraction("rate", 5); }}
-          title="Click to rate 5 stars"
+          title={isAuthenticated ? "Click to rate 5 stars" : "Login to rate"}
         >
           <span className="text-amber-500">★</span> {rating}
         </div>
+
+        {/* Preview badge for unauthenticated users */}
+        {!isAuthenticated && (
+          <div className="absolute bottom-3 left-3 bg-slate-800/70 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full border border-white/20">
+            Preview
+          </div>
+        )}
       </div>
 
       {/* Content */}
       <div className="flex-1 p-5 flex flex-col">
-        <h3 className="text-base font-bold tracking-tight text-slate-900 line-clamp-2 leading-snug" title={title}>
+        <h3
+          className="text-base font-bold tracking-tight text-slate-900 line-clamp-2 leading-snug"
+          title={title}
+        >
           {title}
         </h3>
         <p className="text-sm text-slate-500 mt-1 line-clamp-1" title={author}>
@@ -92,11 +128,17 @@ export default function BookCard({ id, title, author, coverImage, rating = 4.5 }
                 ? "text-rose-500 bg-rose-50 border-rose-200 shadow-inner"
                 : "text-slate-400 hover:text-rose-500"
             }`}
-            disabled={loading || liked}
+            disabled={loading || (isAuthenticated && liked)}
             onClick={(e) => { e.stopPropagation(); handleInteraction("like"); }}
-            title={liked ? "Liked!" : "Add to favourites"}
+            title={
+              !isAuthenticated
+                ? "Login to like this book"
+                : liked
+                ? "Liked!"
+                : "Add to favourites"
+            }
           >
-            {liked ? "♥" : "♡"}
+            {liked && isAuthenticated ? "♥" : "♡"}
           </Button>
         </div>
       </div>
