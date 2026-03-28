@@ -18,7 +18,6 @@ type Book = {
   rating?: number;
 };
 
-const GENRES = ["All", "Fiction", "Non-Fiction", "Science", "History", "Fantasy", "Mystery", "Romance"];
 
 export default function ExplorePage() {
   const { isAuthenticated } = useAuth();
@@ -41,6 +40,24 @@ export default function ExplorePage() {
     };
     fetchBooks();
   }, []);
+
+  // Derive unique genres from actual book data — alphabetically sorted, "All" always first
+  const genres = useMemo(() => {
+    const unique = Array.from(
+      new Set(books.map((b) => b.genre?.trim()).filter(Boolean) as string[])
+    ).sort();
+    return ["All", ...unique];
+  }, [books]);
+
+  // Count of books per genre (for the badge on each pill)
+  const genreCount = useMemo(() => {
+    const counts: Record<string, number> = { All: books.length };
+    books.forEach((b) => {
+      const g = b.genre?.trim();
+      if (g) counts[g] = (counts[g] || 0) + 1;
+    });
+    return counts;
+  }, [books]);
 
   const filtered = useMemo(() => {
     return books.filter((book) => {
@@ -86,21 +103,43 @@ export default function ExplorePage() {
           <Button variant="primary" onClick={() => {}}>Search</Button>
         </div>
 
-        {/* Genre pills */}
+        {/* Genre pills — dynamic from DB */}
         <div className="flex flex-wrap gap-2 mt-6">
-          {GENRES.map((genre) => (
-            <button
-              key={genre}
-              onClick={() => setActiveGenre(genre)}
-              className={`px-4 py-1.5 text-sm font-semibold rounded-xl border transition-all duration-200 ${
-                activeGenre === genre
-                  ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
-                  : "bg-white/70 text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
-              }`}
-            >
-              {genre}
-            </button>
-          ))}
+          {loading ? (
+            // Skeleton pills while books are loading
+            <>  
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-8 rounded-xl bg-slate-200/60 animate-pulse"
+                  style={{ width: `${60 + i * 12}px` }}
+                />
+              ))}
+            </>
+          ) : (
+            genres.map((genre) => (
+              <button
+                key={genre}
+                onClick={() => setActiveGenre(genre)}
+                className={`inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-semibold rounded-xl border transition-all duration-200 ${
+                  activeGenre === genre
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
+                    : "bg-white/70 text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+                }`}
+              >
+                {genre}
+                <span
+                  className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
+                    activeGenre === genre
+                      ? "bg-white/20 text-white"
+                      : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  {genreCount[genre] ?? 0}
+                </span>
+              </button>
+            ))
+          )}
         </div>
       </div>
 
