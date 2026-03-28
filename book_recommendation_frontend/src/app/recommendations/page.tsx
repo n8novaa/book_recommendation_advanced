@@ -3,16 +3,18 @@
 import { useEffect, useState } from "react";
 import BookCard from "@/components/BookCard";
 import { getRecommendations } from "@/lib/api";
+import { useAuth } from "@/lib/useAuth";
 
 type Book = {
   id: number;
   title: string;
   author: string;
-  coverImage?: string;
+  cover_image?: string;
   rating?: number;
 };
 
 export default function RecommendationsPage() {
+  const { isAuthenticated } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +92,8 @@ export default function RecommendationsPage() {
                 title={book.title}
                 author={book.author}
                 rating={book.rating || 4.5}
-                coverImage={book.coverImage}
+                coverImage={book.cover_image}
+                isAuthenticated={isAuthenticated}
               />
             ))}
           </div>

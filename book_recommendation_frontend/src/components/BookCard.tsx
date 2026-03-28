@@ -28,6 +28,7 @@ export default function BookCard({
   const [liked, setLiked] = useState(false);
   const [userRating, setUserRating] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [showRatingPicker, setShowRatingPicker] = useState(false);
   const ratingRef = useRef<HTMLDivElement>(null);
@@ -100,10 +101,11 @@ export default function BookCard({
 
       {/* Cover */}
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-white/50 backdrop-blur-sm border-b border-white/40">
-        {coverImage ? (
+        {coverImage && !imageError ? (
           <img
             src={coverImage}
             alt={title}
+            onError={() => setImageError(true)}
             className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
           />
         ) : (

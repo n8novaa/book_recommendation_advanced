@@ -33,6 +33,7 @@ export default function BookDetailPage() {
   const [userRating, setUserRating] = useState<number | null>(null);
   const [interacting, setInteracting] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -158,10 +159,11 @@ export default function BookDetailPage() {
           {/* ── Cover Column ── */}
           <div className="w-full md:w-64 flex-shrink-0">
             <div className="relative aspect-[2/3] md:aspect-auto md:h-full min-h-[280px] bg-gradient-to-br from-indigo-50 to-violet-50 overflow-hidden">
-              {book.cover_image ? (
+              {book.cover_image && !imageError ? (
                 <img
                   src={book.cover_image}
                   alt={book.title}
+                  onError={() => setImageError(true)}
                   className="object-cover w-full h-full"
                 />
               ) : (

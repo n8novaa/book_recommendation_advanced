@@ -14,7 +14,7 @@ type Book = {
   title: string;
   author: string;
   genre?: string;
-  coverImage?: string;
+  cover_image?: string;
   rating?: number;
 };
 
@@ -142,7 +142,7 @@ export default function ExplorePage() {
               title={book.title}
               author={book.author}
               rating={book.rating || 4.5}
-              coverImage={book.coverImage}
+              coverImage={book.cover_image}
               isAuthenticated={isAuthenticated}
             />
           ))}
