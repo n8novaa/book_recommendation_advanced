@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "./ui/Button";
 import { useToast } from "./ui/Toast";
 import AuthPrompt from "./ui/AuthPrompt";
@@ -114,13 +115,13 @@ export default function BookCard({
         </p>
 
         <div className="mt-auto pt-4 flex gap-2">
-          <Button
-            variant="primary"
-            className="flex-1 py-2 text-xs"
-            onClick={(e) => { e.stopPropagation(); handleInteraction("click"); }}
+          <Link
+            href={`/books/${id}`}
+            className="flex-1 py-2 text-xs inline-flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 active:scale-95 bg-indigo-600/80 backdrop-blur-md text-white shadow-lg shadow-indigo-500/20 border border-white/20 hover:bg-indigo-600 hover:shadow-indigo-500/40 px-4"
+            onClick={(e) => e.stopPropagation()}
           >
             View Details
-          </Button>
+          </Link>
           <Button
             variant="secondary"
             className={`px-3 py-2 text-lg transition-all duration-200 ${

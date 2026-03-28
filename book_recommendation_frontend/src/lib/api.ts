@@ -77,6 +77,23 @@ export const getBooks = async () => {
   return res.json();
 };
 
+export const getBook = async (id: number) => {
+  const token = getToken();
+  const res = await fetch(`${API_URL}/books/${id}/`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    if (res.status === 404) {
+      throw new Error("Book not found.");
+    }
+    throw new Error(errorData.detail || errorData.error || `Failed to fetch book. Status: ${res.status}`);
+  }
+  return res.json();
+};
+
+
 export const addInteraction = async (
   book_id: number,
   interaction_type: string,
