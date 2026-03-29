@@ -55,9 +55,9 @@ export const register = async (data: Record<string, string>) => {
   return res.json();
 };
 
-export const getBooks = async () => {
+export const getBooks = async (page = 1, limit = 15) => {
   const token = getToken();
-  const res = await fetch(`${API_URL}/books/`, {
+  const res = await fetch(`${API_URL}/books/?page=${page}&limit=${limit}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   
@@ -137,9 +137,9 @@ export const getInteractions = async () => {
   return res.json();
 };
 
-export const getRecommendations = async () => {
+export const getRecommendations = async (page = 1, limit = 15) => {
   const token = getToken();
-  const res = await fetch(`${API_URL}/recommendations/`, {
+  const res = await fetch(`${API_URL}/recommendations/?page=${page}&limit=${limit}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) throw new Error("Failed to fetch recommendations.");

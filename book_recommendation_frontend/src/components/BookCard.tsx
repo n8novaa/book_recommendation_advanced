@@ -8,6 +8,7 @@ import AuthPrompt from "./ui/AuthPrompt";
 import StarRating from "./ui/StarRating";
 import { addInteraction } from "@/lib/api";
 import RecommendationReason from "./ui/RecommendationReason";
+import SaveButton from "./ui/SaveButton";
 
 type BookCardProps = {
   id: number;
@@ -192,10 +193,13 @@ export default function BookCard({
       </Link>
 
       {/* Card content */}
-      <div className="p-4 flex flex-col gap-1 flex-1">
-        <h3 className="text-sm font-bold text-white line-clamp-1 group-hover:text-violet-200 transition-colors" title={title}>
-          {title}
-        </h3>
+      <div className="p-4 flex flex-col gap-1 flex-1 relative">
+        <div className="flex justify-between items-start gap-2">
+          <h3 className="text-sm font-bold text-white line-clamp-1 group-hover:text-violet-200 transition-colors" title={title}>
+            {title}
+          </h3>
+          <SaveButton bookId={id} className="shrink-0" />
+        </div>
         <p className="text-xs text-slate-500 line-clamp-1">
           by <span className="text-slate-400">{author}</span>
         </p>

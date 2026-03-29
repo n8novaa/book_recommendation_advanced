@@ -9,6 +9,7 @@ import DiscoverMode from "@/components/DiscoverMode";
 import { getBooks } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 import { Input } from "@/components/ui/Input";
+import InfiniteScrollList from "@/components/ui/InfiniteScrollList";
 
 type Book = {
   id: number; title: string; author: string;
@@ -32,12 +33,40 @@ export default function ExplorePage() {
   const [activeGenre, setActiveGenre] = useState("All");
   const [viewMode, setViewMode] = useState<"grid" | "discover">("grid");
 
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const loadBooks = async (pageNum: number) => {
+    try {
+      if (pageNum === 1) setLoading(true);
+      else setIsLoadingMore(true);
+
+      const data = await getBooks(pageNum, 15);
+      if (!Array.isArray(data)) throw new Error("Invalid response format");
+      
+      if (pageNum === 1) setBooks(data);
+      else setBooks((prev) => [...prev, ...data]);
+      
+      if (data.length < 15) setHasMore(false);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      if (pageNum === 1) setLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
+
   useEffect(() => {
-    getBooks()
-      .then((d) => setBooks(Array.isArray(d) ? d : []))
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+    loadBooks(1);
   }, []);
+
+  const loadNextPage = async () => {
+    if (isLoadingMore || !hasMore || loading) return;
+    const next = page + 1;
+    setPage(next);
+    await loadBooks(next);
+  };
 
   const genres = useMemo(() => {
     const unique = Array.from(new Set(books.map((b) => b.genre?.trim()).filter(Boolean) as string[])).sort();
@@ -149,20 +178,22 @@ export default function ExplorePage() {
               <p className="text-slate-500 text-sm">{books.length === 0 ? "Check back soon." : "Try a different search or filter."}</p>
             </div>
           ) : (
-            <motion.div
-              variants={stagger}
-              initial="initial"
-              animate="animate"
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-            >
-              {filtered.map((book) => (
-                <motion.div key={book.id} variants={fadeUp}>
-                  <BookCard id={book.id} title={book.title} author={book.author}
-                    rating={book.rating || 4.5} coverImage={book.cover_image}
-                    genre={book.genre} isAuthenticated={isAuthenticated} />
-                </motion.div>
-              ))}
-            </motion.div>
+            <InfiniteScrollList hasMore={hasMore} isLoading={isLoadingMore} onLoadMore={loadNextPage}>
+              <motion.div
+                variants={stagger}
+                initial="initial"
+                animate="animate"
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+              >
+                {filtered.map((book) => (
+                  <motion.div key={book.id} variants={fadeUp}>
+                    <BookCard id={book.id} title={book.title} author={book.author}
+                      rating={book.rating || 4.5} coverImage={book.cover_image}
+                      genre={book.genre} isAuthenticated={isAuthenticated} />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </InfiniteScrollList>
           )}
         </>
       )}

@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/Toast";
 import AuthPrompt from "@/components/ui/AuthPrompt";
 import StarRating from "@/components/ui/StarRating";
 import SimilarBooks from "@/components/ui/SimilarBooks";
+import SaveButton from "@/components/ui/SaveButton";
 
 type Book = {
   id: number; title: string; author: string;
@@ -194,6 +195,10 @@ export default function BookDetailPage() {
                 <span>{liked && isAuthenticated ? "♥" : "♡"}</span>
                 {liked && isAuthenticated ? "Liked" : "Add to Favourites"}
               </motion.button>
+
+              <div className="glass glass-hover px-4 py-2.5 rounded-xl border border-white/10 flex items-center justify-center">
+                <SaveButton bookId={book.id} />
+              </div>
 
               {!isAuthenticated && (
                 <span className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-xl">

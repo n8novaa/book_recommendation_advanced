@@ -58,6 +58,7 @@ export default function Navbar() {
           <div className="hidden sm:flex items-center gap-1">
             {[
               { href: "/explore", label: "Explore" },
+              { href: "/discover", label: "Discover" },
               ...(isAuthenticated ? [{ href: "/recommendations", label: "For You" }] : []),
             ].map((item) => (
               <Link
@@ -75,10 +76,16 @@ export default function Navbar() {
             {isAuthenticated ? (
               <>
                 <Link
-                  href="/dashboard"
+                  href="/wishlist"
                   className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white glass rounded-xl hover:border-violet-500/40 transition-all duration-200"
                 >
-                  Dashboard
+                  Wishlist
+                </Link>
+                <Link
+                  href="/profile"
+                  className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white glass rounded-xl hover:border-violet-500/40 transition-all duration-200"
+                >
+                  Profile
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -133,10 +140,12 @@ export default function Navbar() {
             <div className="px-4 py-4 space-y-1">
               {[
                 { href: "/explore", label: "Explore" },
+                { href: "/discover", label: "Discover" },
                 ...(isAuthenticated
                   ? [
                       { href: "/recommendations", label: "For You" },
-                      { href: "/dashboard", label: "Dashboard" },
+                      { href: "/wishlist", label: "Wishlist" },
+                      { href: "/profile", label: "Profile" },
                     ]
                   : [
                       { href: "/login", label: "Sign in" },

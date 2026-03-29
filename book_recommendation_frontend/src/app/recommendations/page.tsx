@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import BookCard from "@/components/BookCard";
 import BookCardSkeleton from "@/components/ui/BookCardSkeleton";
+import InfiniteScrollList from "@/components/ui/InfiniteScrollList";
 import { getRecommendations } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 
@@ -18,12 +19,40 @@ export default function RecommendationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const loadBooks = async (pageNum: number) => {
+    try {
+      if (pageNum === 1) setLoading(true);
+      else setIsLoadingMore(true);
+
+      const data = await getRecommendations(pageNum, 15);
+      if (!Array.isArray(data)) throw new Error("Invalid response format");
+      
+      if (pageNum === 1) setBooks(data);
+      else setBooks((prev) => [...prev, ...data]);
+      
+      if (data.length < 15) setHasMore(false);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      if (pageNum === 1) setLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
+
   useEffect(() => {
-    getRecommendations()
-      .then((d) => setBooks(Array.isArray(d) ? d : []))
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+    loadBooks(1);
   }, []);
+
+  const loadNextPage = async () => {
+    if (isLoadingMore || !hasMore || loading) return;
+    const next = page + 1;
+    setPage(next);
+    await loadBooks(next);
+  };
 
   const isColdStart = books.length > 0 && books[0].reason?.toLowerCase().includes("trending");
 
@@ -73,17 +102,19 @@ export default function RecommendationsPage() {
       ) : (
         <>
           <p className="text-xs text-slate-600 mb-5 pl-1">{books.length} book{books.length !== 1 ? "s" : ""} recommended for you</p>
-          <motion.div variants={stagger} initial="initial" animate="animate"
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-          >
-            {books.map((book) => (
-              <motion.div key={book.id} variants={fadeUp}>
-                <BookCard id={book.id} title={book.title} author={book.author}
-                  rating={book.rating || 4.5} coverImage={book.cover_image}
-                  genre={book.genre} reason={book.reason} isAuthenticated={isAuthenticated} />
-              </motion.div>
-            ))}
-          </motion.div>
+          <InfiniteScrollList hasMore={hasMore} isLoading={isLoadingMore} onLoadMore={loadNextPage}>
+            <motion.div variants={stagger} initial="initial" animate="animate"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+            >
+              {books.map((book) => (
+                <motion.div key={book.id} variants={fadeUp}>
+                  <BookCard id={book.id} title={book.title} author={book.author}
+                    rating={book.rating || 4.5} coverImage={book.cover_image}
+                    genre={book.genre} reason={book.reason} isAuthenticated={isAuthenticated} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </InfiniteScrollList>
         </>
       )}
     </div>
