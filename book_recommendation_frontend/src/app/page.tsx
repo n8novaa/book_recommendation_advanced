@@ -1,30 +1,99 @@
+"use client";
+
+import Link from "next/link";
+import { motion } from "framer-motion";
+
+const fadeUp = { initial: { opacity: 0, y: 30 }, animate: { opacity: 1, y: 0 } };
+
 export default function Home() {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-      <div className="text-center max-w-3xl mx-auto space-y-8 opacity-0 animate-[slide-up_0.8s_ease-out_forwards]">
-        <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 sm:text-6xl md:text-7xl">
-          <span className="block mb-2">Discover your next</span>
-          <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-500">
-            favorite book
+    <div className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 overflow-hidden">
+
+      {/* Hero content */}
+      <div className="text-center max-w-4xl mx-auto space-y-8 z-10">
+        {/* Badge */}
+        <motion.div {...fadeUp} transition={{ duration: 0.5 }}>
+          <span className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-violet-300 border border-violet-500/30 bg-violet-500/10 rounded-full backdrop-blur-sm tracking-widest uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+            AI-Powered Recommendations
           </span>
-        </h1>
-        <p className="mx-auto text-lg text-slate-600 sm:text-xl leading-relaxed">
-          Join our community of readers. Get personalized recommendations based on your reading history, preferences, and ratings.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-          <a
+        </motion.div>
+
+        {/* Headline */}
+        <motion.h1
+          {...fadeUp}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.05]"
+        >
+          <span className="text-white">Discover your</span>
+          <br />
+          <span className="gradient-text">next obsession.</span>
+        </motion.h1>
+
+        {/* Subline */}
+        <motion.p
+          {...fadeUp}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed"
+        >
+          Personalized book recommendations that learn your taste — powered by hybrid AI across 10,000+ titles.
+        </motion.p>
+
+        {/* CTAs */}
+        <motion.div
+          {...fadeUp}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+        >
+          <Link
             href="/register"
-            className="w-full sm:w-auto flex items-center justify-center rounded-xl bg-indigo-600/80 backdrop-blur-md px-8 py-4 text-base font-semibold text-white shadow-xl shadow-indigo-500/20 border border-white/20 hover:bg-indigo-600 hover:shadow-indigo-500/40 hover:-translate-y-1 transition-all duration-300 md:text-lg"
+            className="group relative px-8 py-4 text-base font-bold text-white rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-2xl shadow-violet-500/30 hover:shadow-violet-500/50 hover:-translate-y-1 transition-all duration-300 active:scale-95"
           >
-            Get started for free
-          </a>
-          <a
+            <span className="relative">Start for free →</span>
+          </Link>
+          <Link
             href="/explore"
-            className="w-full sm:w-auto flex items-center justify-center rounded-xl bg-white/40 backdrop-blur-xl border border-white/60 px-8 py-4 text-base font-semibold text-slate-700 shadow-lg shadow-slate-200/50 hover:border-white hover:bg-white/60 hover:text-indigo-700 hover:-translate-y-1 transition-all duration-300 md:text-lg ring-1 ring-slate-900/5"
+            className="px-8 py-4 text-base font-semibold text-slate-300 rounded-2xl glass glass-hover hover:-translate-y-1 transition-all duration-300 hover:text-white"
           >
-            Explore books
-          </a>
-        </div>
+            Browse books
+          </Link>
+        </motion.div>
+
+        {/* Stats row */}
+        <motion.div
+          {...fadeUp}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="flex flex-wrap justify-center gap-8 pt-4"
+        >
+          {[
+            { value: "10K+", label: "Books" },
+            { value: "AI", label: "Hybrid Engine" },
+            { value: "Free", label: "Always" },
+          ].map((stat) => (
+            <div key={stat.label} className="text-center">
+              <div className="text-2xl font-black gradient-text">{stat.value}</div>
+              <div className="text-xs text-slate-500 font-medium mt-0.5">{stat.label}</div>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Decorative floating cards */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {[
+          { top: "15%", left: "5%", delay: 0, size: "w-36 h-48", opacity: "opacity-20" },
+          { top: "60%", left: "3%", delay: 1, size: "w-28 h-36", opacity: "opacity-10" },
+          { top: "10%", right: "5%", delay: 0.5, size: "w-32 h-44", opacity: "opacity-20" },
+          { top: "55%", right: "4%", delay: 1.5, size: "w-40 h-52", opacity: "opacity-10" },
+        ].map((card, i) => (
+          <motion.div
+            key={i}
+            className={`absolute ${card.size} ${card.opacity} glass rounded-2xl`}
+            style={{ top: card.top, left: (card as any).left, right: (card as any).right }}
+            animate={{ y: [0, -12, 0], rotate: [0, i % 2 === 0 ? 2 : -2, 0] }}
+            transition={{ duration: 5 + i, delay: card.delay, repeat: Infinity, ease: "easeInOut" }}
+          />
+        ))}
       </div>
     </div>
   );

@@ -1,31 +1,29 @@
 import * as React from "react";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "glass" | "ghost";
+  variant?: "primary" | "secondary" | "glass" | "ghost" | "danger";
 }
 
 export function Button({ className = "", variant = "primary", ...props }: ButtonProps) {
-  const baseStyles = "inline-flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 disabled:pointer-events-none active:scale-95";
+  const base =
+    "inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 disabled:opacity-40 disabled:pointer-events-none active:scale-95";
 
-  let variantStyles = "";
-  switch (variant) {
-    case "primary":
-      variantStyles = "bg-indigo-600/80 backdrop-blur-md text-white shadow-lg shadow-indigo-500/20 border border-white/20 hover:bg-indigo-600 hover:shadow-indigo-500/40";
-      break;
-    case "secondary":
-      variantStyles = "bg-white/40 backdrop-blur-xl border border-white/60 text-slate-700 shadow-sm hover:border-white hover:bg-white/60 hover:text-indigo-700 ring-1 ring-slate-900/5";
-      break;
-    case "glass":
-      variantStyles = "bg-white/20 backdrop-blur-2xl border border-white/40 text-slate-800 shadow-xl shadow-slate-200/20 hover:bg-white/40 context-menu";
-      break;
-    case "ghost":
-      variantStyles = "bg-transparent hover:bg-white/20 text-slate-700 hover:backdrop-blur-md";
-      break;
-  }
+  const variants: Record<string, string> = {
+    primary:
+      "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/20 hover:from-violet-500 hover:to-indigo-500 hover:shadow-violet-500/40 hover:-translate-y-0.5",
+    secondary:
+      "bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20 hover:text-white backdrop-blur-md",
+    glass:
+      "bg-white/5 backdrop-blur-xl border border-white/10 text-white hover:bg-white/10 hover:border-violet-500/40 shadow-lg shadow-black/20",
+    ghost:
+      "bg-transparent text-slate-400 hover:text-white hover:bg-white/5",
+    danger:
+      "bg-rose-600/10 border border-rose-500/20 text-rose-400 hover:bg-rose-600/20 hover:text-rose-300",
+  };
 
   return (
     <button
-      className={`${baseStyles} ${variantStyles} px-4 py-2.5 ${className}`}
+      className={`${base} ${variants[variant]} px-4 py-2.5 ${className}`}
       {...props}
     />
   );

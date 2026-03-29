@@ -5,7 +5,15 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 export function Input({ className = "", ...props }: InputProps) {
   return (
     <input
-      className={`flex h-12 w-full rounded-xl border border-white/60 bg-white/40 backdrop-blur-xl px-4 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-slate-900/5 transition-all file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 hover:bg-white/50 hover:border-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white/70 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      className={`
+        w-full px-4 py-3 rounded-xl text-sm text-white placeholder-slate-500
+        bg-white/5 border border-white/10
+        backdrop-blur-md
+        focus:outline-none focus:border-violet-500/60 focus:bg-white/8 focus:ring-2 focus:ring-violet-500/20
+        hover:border-white/20 hover:bg-white/8
+        transition-all duration-200
+        ${className}
+      `}
       {...props}
     />
   );

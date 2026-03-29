@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { getBook, addInteraction } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 import { useToast } from "@/components/ui/Toast";
@@ -10,19 +11,14 @@ import AuthPrompt from "@/components/ui/AuthPrompt";
 import StarRating from "@/components/ui/StarRating";
 
 type Book = {
-  id: number;
-  title: string;
-  author: string;
-  genre: string;
-  description: string;
-  cover_image?: string;
+  id: number; title: string; author: string;
+  genre: string; description: string; cover_image?: string;
 };
 
 export default function BookDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = Number(params.id);
-
   const { isAuthenticated } = useAuth();
   const { showToast } = useToast();
 
@@ -34,43 +30,29 @@ export default function BookDetailPage() {
   const [interacting, setInteracting] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const clickRecorded = useRef(false);
 
   useEffect(() => {
-    const fetchBook = async () => {
-      try {
-        const data = await getBook(id);
-        setBook(data);
-      } catch (err: any) {
-        setError(err.message || "Failed to load book");
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (id) fetchBook();
+    getBook(id).then(setBook).catch((e) => setError(e.message)).finally(() => setLoading(false));
   }, [id]);
 
-  const requireAuth = (): boolean => {
-    if (!isAuthenticated) {
-      setShowAuthPrompt(true);
-      return false;
+  useEffect(() => {
+    if (isAuthenticated && id && !clickRecorded.current) {
+      clickRecorded.current = true;
+      addInteraction(id, "click").catch(() => {});
     }
-    return true;
-  };
+  }, [isAuthenticated, id]);
 
-  const handleInteraction = async (type: string, val: number | null = null) => {
+  const requireAuth = () => { if (!isAuthenticated) { setShowAuthPrompt(true); return false; } return true; };
+
+  const handleInteraction = async (type: string, val?: number) => {
     if (!requireAuth()) return;
     try {
       setInteracting(true);
-      await addInteraction(id, type, val);
-      if (type === "like") {
-        setLiked(true);
-        showToast(`Added "${book?.title}" to your favourites!`, "success");
-      }
-    } catch {
-      showToast("Couldn't record interaction. Please try again.", "error");
-    } finally {
-      setInteracting(false);
-    }
+      await addInteraction(id, type, val ?? null);
+      if (type === "like") { setLiked(true); showToast(`Added "${book?.title}" to favourites!`, "success"); }
+    } catch { showToast("Couldn't record interaction.", "error"); }
+    finally { setInteracting(false); }
   };
 
   const handleRate = async (value: number) => {
@@ -79,66 +61,45 @@ export default function BookDetailPage() {
       setInteracting(true);
       await addInteraction(id, "rate", value);
       setUserRating(value);
-      showToast(`Rated "${book?.title}" ${value} star${value > 1 ? "s" : ""}!`, "success");
-    } catch {
-      showToast("Couldn't submit rating. Please try again.", "error");
-    } finally {
-      setInteracting(false);
-    }
+      showToast(`Rated "${book?.title}" ${value} stars!`, "success");
+    } catch { showToast("Couldn't submit rating.", "error"); }
+    finally { setInteracting(false); }
   };
 
-  /* ── Loading skeleton ── */
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="animate-pulse flex flex-col md:flex-row gap-10">
-          <div className="w-full md:w-64 flex-shrink-0 aspect-[2/3] bg-slate-200/60 rounded-3xl" />
-          <div className="flex-1 space-y-4 pt-2">
-            <div className="h-8 bg-slate-200/60 rounded-xl w-3/4" />
-            <div className="h-5 bg-slate-200/60 rounded-xl w-1/3" />
-            <div className="h-4 bg-slate-200/40 rounded-xl w-1/4 mt-2" />
-            <div className="space-y-2 mt-6">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-4 bg-slate-200/40 rounded-xl" />
-              ))}
-            </div>
-          </div>
+  if (loading) return (
+    <div className="mx-auto max-w-5xl px-4 py-12 animate-pulse">
+      <div className="flex flex-col md:flex-row gap-8">
+        <div className="w-full md:w-72 aspect-[3/4] bg-white/5 rounded-3xl flex-shrink-0" />
+        <div className="flex-1 space-y-4 pt-4">
+          <div className="h-8 bg-white/5 rounded-xl w-3/4" />
+          <div className="h-5 bg-white/5 rounded-xl w-1/3" />
+          <div className="space-y-2 mt-8">{[...Array(6)].map((_, i) => <div key={i} className="h-4 bg-white/5 rounded-xl" />)}</div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
-  /* ── Error state ── */
-  if (error || !book) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <div className="bg-rose-50/80 backdrop-blur-md rounded-3xl p-12 border border-rose-200 shadow-sm">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-rose-100 flex items-center justify-center">
-            <svg className="w-8 h-8 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold text-rose-700 mb-2">Book not found</h2>
-          <p className="text-rose-600 text-sm mb-6">{error}</p>
-          <Link
-            href="/explore"
-            className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
-          >
-            ← Back to Explore
-          </Link>
-        </div>
+  if (error || !book) return (
+    <div className="mx-auto max-w-5xl px-4 py-20 text-center">
+      <div className="glass rounded-3xl p-12 border border-rose-500/20">
+        <p className="text-4xl mb-4">📕</p>
+        <h2 className="text-xl font-bold text-rose-400 mb-2">Book not found</h2>
+        <p className="text-slate-500 text-sm mb-6">{error}</p>
+        <Link href="/explore" className="px-6 py-2.5 text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 transition-all">
+          ← Back to Explore
+        </Link>
       </div>
-    );
-  }
+    </div>
+  );
 
-  /* ── Detail view ── */
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-10 opacity-0 animate-[fade-in_0.5s_ease-out_forwards]">
-
-      {/* Back button */}
-      <button
-        onClick={() => router.back()}
-        className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors group"
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
+      className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10"
+    >
+      {/* Back */}
+      <button onClick={() => router.back()}
+        className="mb-8 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-violet-400 transition-colors group"
       >
         <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
@@ -146,135 +107,90 @@ export default function BookDetailPage() {
         Back
       </button>
 
-      {/* Main card */}
-      <div className="relative bg-white/50 backdrop-blur-2xl rounded-3xl border border-white shadow-xl shadow-indigo-100/30 ring-1 ring-slate-900/5 overflow-hidden">
+      <div className="relative glass rounded-3xl border border-white/10 overflow-hidden">
+        {showAuthPrompt && <AuthPrompt onClose={() => setShowAuthPrompt(false)} />}
 
-        {/* Auth prompt overlay */}
-        {showAuthPrompt && (
-          <AuthPrompt onClose={() => setShowAuthPrompt(false)} />
-        )}
-
-        <div className="flex flex-col md:flex-row gap-0">
-
-          {/* ── Cover Column ── */}
-          <div className="w-full md:w-64 flex-shrink-0">
-            <div className="relative aspect-[2/3] md:aspect-auto md:h-full min-h-[280px] bg-gradient-to-br from-indigo-50 to-violet-50 overflow-hidden">
-              {book.cover_image && !imageError ? (
-                <img
-                  src={book.cover_image}
-                  alt={book.title}
-                  onError={() => setImageError(true)}
-                  className="object-cover w-full h-full"
-                />
-              ) : (
-                /* Stylised placeholder with first letters */
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6">
-                  <div className="w-24 h-24 rounded-2xl bg-indigo-200/60 border border-indigo-300/40 flex items-center justify-center shadow-inner">
-                    <span className="text-3xl font-black text-indigo-600 leading-none select-none">
-                      {book.title.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <p className="text-xs font-semibold text-indigo-400 text-center leading-snug line-clamp-3">
-                    {book.title}
-                  </p>
+        <div className="flex flex-col md:flex-row">
+          {/* Cover */}
+          <div className="relative w-full md:w-72 flex-shrink-0 min-h-[320px] bg-gradient-to-br from-violet-900/30 via-indigo-900/20 to-transparent">
+            {book.cover_image && !imageError ? (
+              <img src={book.cover_image} alt={book.title} onError={() => setImageError(true)} className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8">
+                <div className="w-28 h-28 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center shadow-2xl">
+                  <span className="text-5xl font-black gradient-text">{book.title.charAt(0)}</span>
                 </div>
-              )}
-
-              {/* Genre ribbon */}
+                <p className="text-xs text-slate-500 text-center line-clamp-2">{book.title}</p>
+              </div>
+            )}
+            {book.genre && (
               <div className="absolute top-4 left-4">
-                <span className="px-3 py-1 text-xs font-bold text-indigo-700 bg-white/80 backdrop-blur-sm border border-indigo-100 rounded-full shadow-sm">
+                <span className="px-3 py-1 text-xs font-bold text-violet-300 bg-violet-500/20 border border-violet-500/30 rounded-full backdrop-blur-sm">
                   {book.genre}
                 </span>
               </div>
-            </div>
+            )}
           </div>
 
-          {/* ── Info Column ── */}
+          {/* Info */}
           <div className="flex-1 p-8 flex flex-col">
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+              className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2"
+            >
+              {book.title}
+            </motion.h1>
+            <p className="text-slate-400 mb-6">by <span className="text-violet-400 font-semibold">{book.author}</span></p>
 
-            {/* Title + author */}
-            <div className="mb-6">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-snug mb-2">
-                {book.title}
-              </h1>
-              <p className="text-base text-slate-500">
-                by{" "}
-                <span className="font-semibold text-indigo-600">{book.author}</span>
-              </p>
-            </div>
+            <div className="border-t border-white/5 mb-6" />
 
-            {/* Divider */}
-            <div className="border-t border-slate-100 mb-6" />
-
-            {/* Description */}
-            <div className="flex-1">
-              <h2 className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-3">
-                About this book
-              </h2>
-              <p className="text-slate-700 leading-relaxed text-sm sm:text-base">
+            <div className="flex-1 mb-6">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-slate-600 mb-3">About</p>
+              <p className="text-slate-400 leading-relaxed text-sm">
                 {book.description || "No description available for this book yet."}
               </p>
             </div>
 
-            {/* Divider */}
-            <div className="border-t border-slate-100 mt-8 mb-6" />
+            <div className="border-t border-white/5 mb-6" />
+
+            {/* Rating */}
+            <div className="mb-5">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-slate-600 mb-3">Rate this book</p>
+              {isAuthenticated ? (
+                <StarRating onRate={handleRate} disabled={interacting} currentRating={userRating} />
+              ) : (
+                <button onClick={() => setShowAuthPrompt(true)} className="flex items-center gap-1 text-slate-600 hover:text-amber-400 transition-colors">
+                  {[1,2,3,4,5].map(s => <span key={s} className="text-xl">★</span>)}
+                  <span className="ml-2 text-xs text-slate-500">Login to rate</span>
+                </button>
+              )}
+            </div>
 
             {/* Actions */}
-            <div className="flex flex-wrap items-center gap-3">
-
-              {/* ── Rating row ── */}
-              <div className="w-full">
-                <p className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-2">
-                  Rate this book
-                </p>
-                {isAuthenticated ? (
-                  <StarRating
-                    onRate={handleRate}
-                    disabled={interacting}
-                    currentRating={userRating}
-                  />
-                ) : (
-                  <button
-                    onClick={() => setShowAuthPrompt(true)}
-                    className="flex items-center gap-1 text-slate-300 hover:text-amber-400 transition-colors"
-                    title="Login to rate this book"
-                  >
-                    {[1,2,3,4,5].map((s) => (
-                      <span key={s} className="text-2xl">★</span>
-                    ))}
-                    <span className="ml-2 text-xs text-slate-400 font-medium">Login to rate</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Divider */}
-              <div className="w-full border-t border-slate-100" />
-
-              {/* Like button */}
-              <button
+            <div className="flex flex-wrap gap-3 items-center">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 disabled={interacting || (isAuthenticated && liked)}
                 onClick={() => handleInteraction("like")}
-                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200 active:scale-95 disabled:opacity-60 disabled:pointer-events-none ${
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
                   liked && isAuthenticated
-                    ? "bg-rose-50 border-rose-200 text-rose-600 shadow-inner"
-                    : "bg-white/60 border-slate-200 text-slate-700 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50/50"
+                    ? "bg-rose-500/20 border-rose-500/30 text-rose-300"
+                    : "glass glass-hover text-slate-300 hover:text-rose-300 hover:border-rose-500/30"
                 }`}
-                title={!isAuthenticated ? "Login to like this book" : liked ? "Liked!" : "Add to favourites"}
               >
-                <span className="text-base">{liked && isAuthenticated ? "♥" : "♡"}</span>
+                <span>{liked && isAuthenticated ? "♥" : "♡"}</span>
                 {liked && isAuthenticated ? "Liked" : "Add to Favourites"}
-              </button>
+              </motion.button>
 
-              {/* Preview note for unauth users */}
               {!isAuthenticated && (
-                <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl font-medium">
-                  🔒 Log in to interact with this book
+                <span className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-xl">
+                  🔒 Login to interact
                 </span>
               )}
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

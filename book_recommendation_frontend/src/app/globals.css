@@ -1,31 +1,102 @@
 @import "tailwindcss";
 
-@theme {
-  --animate-fade-in: fade-in 0.7s ease-out forwards;
-  --animate-slide-up: slide-up 0.5s ease-out forwards;
+/* ── Design tokens ───────────────────────────────────────────── */
+:root {
+  --bg-base:        #080812;
+  --bg-surface:     #0f0f23;
+  --glass-bg:       rgba(255,255,255,0.05);
+  --glass-border:   rgba(255,255,255,0.10);
+  --glass-hover:    rgba(255,255,255,0.09);
+  --accent-from:    #7c3aed;   /* violet-600  */
+  --accent-to:      #4f46e5;   /* indigo-600  */
+  --glow-violet:    rgba(124,58,237,0.35);
+  --glow-indigo:    rgba(79,70,229,0.30);
+  --text-primary:   #f1f5f9;   /* slate-100   */
+  --text-secondary: #94a3b8;   /* slate-400   */
+  --text-muted:     #475569;   /* slate-600   */
 }
 
-:root {
-  --background: #f8fafc; /* slate-50 */
-  --foreground: #1e293b; /* slate-800 */
+/* ── Theme ───────────────────────────────────────────────────── */
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.4); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,0.7); }
+
+/* Selection */
+::selection { background: rgba(124,58,237,0.35); color: #fff; }
+
+/* ── Glass utility ───────────────────────────────────────────── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-hover:hover {
+  background: var(--glass-hover);
+  border-color: rgba(124,58,237,0.3);
+}
+
+/* ── Gradient text ───────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #a78bfa, #818cf8, #c4b5fd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glow effects ────────────────────────────────────────────── */
+.glow-violet { box-shadow: 0 0 40px var(--glow-violet); }
+.glow-indigo  { box-shadow: 0 0 40px var(--glow-indigo);  }
+
+/* ── Animations ──────────────────────────────────────────────── */
+@theme {
+  --animate-fade-in:   fade-in   0.6s ease-out forwards;
+  --animate-slide-up:  slide-up  0.6s ease-out forwards;
+  --animate-slide-in:  slide-in  0.4s ease-out forwards;
+  --animate-float:     float     6s ease-in-out infinite;
+  --animate-pulse-slow:pulse-slow 4s ease-in-out infinite;
 }
 
 @keyframes fade-in {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
-
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0);    }
 }
-
 @keyframes slide-in {
   from { opacity: 0; transform: translateX(40px); }
-  to { opacity: 1; transform: translateX(0); }
+  to   { opacity: 1; transform: translateX(0);    }
 }
-
-body {
-  background: var(--background);
-  color: var(--foreground);
+@keyframes float {
+  0%,100% { transform: translateY(0)    rotate(0deg);   }
+  33%     { transform: translateY(-18px) rotate(2deg);  }
+  66%     { transform: translateY(-8px)  rotate(-2deg); }
+}
+@keyframes pulse-slow {
+  0%,100% { opacity: 0.4; transform: scale(1);    }
+  50%     { opacity: 0.7; transform: scale(1.08); }
+}
+@keyframes orb-drift-1 {
+  0%,100% { transform: translate(0, 0);    }
+  50%     { transform: translate(60px, -80px);  }
+}
+@keyframes orb-drift-2 {
+  0%,100% { transform: translate(0, 0);    }
+  50%     { transform: translate(-80px, 60px);  }
+}
+@keyframes orb-drift-3 {
+  0%,100% { transform: translate(0, 0) scale(1);   }
+  50%     { transform: translate(40px, 40px) scale(1.1); }
 }
