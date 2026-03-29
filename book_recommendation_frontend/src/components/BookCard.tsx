@@ -7,6 +7,7 @@ import { useToast } from "./ui/Toast";
 import AuthPrompt from "./ui/AuthPrompt";
 import StarRating from "./ui/StarRating";
 import { addInteraction } from "@/lib/api";
+import RecommendationReason from "./ui/RecommendationReason";
 
 type BookCardProps = {
   id: number;
@@ -15,6 +16,7 @@ type BookCardProps = {
   coverImage?: string;
   rating?: number;
   genre?: string;
+  reason?: string;
   isAuthenticated?: boolean;
 };
 
@@ -25,6 +27,7 @@ export default function BookCard({
   coverImage,
   rating = 4.5,
   genre,
+  reason,
   isAuthenticated = false,
 }: BookCardProps) {
   const [liked, setLiked] = useState(false);
@@ -196,6 +199,7 @@ export default function BookCard({
         <p className="text-xs text-slate-500 line-clamp-1">
           by <span className="text-slate-400">{author}</span>
         </p>
+        {reason && <RecommendationReason reason={reason} />}
       </div>
     </motion.div>
   );

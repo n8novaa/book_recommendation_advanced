@@ -7,7 +7,7 @@ import BookCardSkeleton from "@/components/ui/BookCardSkeleton";
 import { getRecommendations } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 
-type Book = { id: number; title: string; author: string; cover_image?: string; rating?: number; genre?: string; };
+type Book = { id: number; title: string; author: string; cover_image?: string; rating?: number; genre?: string; reason?: string; };
 
 const stagger = { animate: { transition: { staggerChildren: 0.07 } } };
 const fadeUp = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
@@ -25,6 +25,8 @@ export default function RecommendationsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const isColdStart = books.length > 0 && books[0].reason?.toLowerCase().includes("trending");
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
@@ -37,8 +39,14 @@ export default function RecommendationsPage() {
             </svg>
           </div>
           <div>
-            <h1 className="text-3xl font-black text-white tracking-tight">For <span className="gradient-text">You</span></h1>
-            <p className="text-sm text-slate-500 mt-0.5">Personalized picks powered by hybrid AI.</p>
+            <h1 className="text-3xl font-black text-white tracking-tight">
+              {isColdStart ? "Trending " : "For "}<span className="gradient-text">{isColdStart ? "Now" : "You"}</span>
+            </h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              {isColdStart 
+                ? "Interact with books to teach the AI your tastes! Here is what's popular globally." 
+                : "Personalized picks powered by hybrid AI."}
+            </p>
           </div>
         </div>
       </motion.div>
@@ -72,7 +80,7 @@ export default function RecommendationsPage() {
               <motion.div key={book.id} variants={fadeUp}>
                 <BookCard id={book.id} title={book.title} author={book.author}
                   rating={book.rating || 4.5} coverImage={book.cover_image}
-                  genre={book.genre} isAuthenticated={isAuthenticated} />
+                  genre={book.genre} reason={book.reason} isAuthenticated={isAuthenticated} />
               </motion.div>
             ))}
           </motion.div>

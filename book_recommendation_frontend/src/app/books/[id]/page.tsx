@@ -9,10 +9,13 @@ import { useAuth } from "@/lib/useAuth";
 import { useToast } from "@/components/ui/Toast";
 import AuthPrompt from "@/components/ui/AuthPrompt";
 import StarRating from "@/components/ui/StarRating";
+import SimilarBooks from "@/components/ui/SimilarBooks";
 
 type Book = {
   id: number; title: string; author: string;
   genre: string; description: string; cover_image?: string;
+  average_rating?: number; total_interactions?: number;
+  similar_books?: any[];
 };
 
 export default function BookDetailPage() {
@@ -142,6 +145,16 @@ export default function BookDetailPage() {
             </motion.h1>
             <p className="text-slate-400 mb-6">by <span className="text-violet-400 font-semibold">{book.author}</span></p>
 
+            {/* Intelligence Stats */}
+            <div className="flex gap-4 mb-6">
+              <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 px-3 py-1.5 rounded-xl flex items-center gap-1.5 text-sm font-semibold">
+                <span>★</span> {book.average_rating || "No Rating"}
+              </div>
+              <div className="bg-violet-500/10 border border-violet-500/20 text-violet-400 px-3 py-1.5 rounded-xl flex items-center gap-1.5 text-sm font-semibold">
+                <span>⚡</span> {book.total_interactions || 0} Interactions
+              </div>
+            </div>
+
             <div className="border-t border-white/5 mb-6" />
 
             <div className="flex-1 mb-6">
@@ -188,6 +201,10 @@ export default function BookDetailPage() {
                 </span>
               )}
             </div>
+            {/* Similar Books Component */}
+            {book.similar_books && book.similar_books.length > 0 && (
+              <SimilarBooks books={book.similar_books} />
+            )}
           </div>
         </div>
       </div>
